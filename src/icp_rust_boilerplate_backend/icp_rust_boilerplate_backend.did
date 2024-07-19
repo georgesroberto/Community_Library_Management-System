@@ -1,0 +1,83 @@
+type Book = record {
+  id : nat64;
+  title : text;
+  isbn : text;
+  created_at : nat64;
+  author : text;
+  available : bool;
+  genre : text;
+  location : text;
+  publication_year : int32;
+};
+type BookPayload = record {
+  title : text;
+  isbn : text;
+  author : text;
+  available : bool;
+  genre : text;
+  location : text;
+  publication_year : int32;
+};
+type Loan = record {
+  id : nat64;
+  fine : float64;
+  return_date : opt nat64;
+  loan_date : nat64;
+  book_id : nat64;
+  due_date : nat64;
+  member_id : nat64;
+};
+type LoanPayload = record {
+  fine : float64;
+  return_date : opt nat64;
+  book_id : nat64;
+  due_date : nat64;
+  member_id : nat64;
+};
+type Member = record {
+  id : nat64;
+  username : text;
+  created_at : nat64;
+  address : text;
+  phone_number : text;
+};
+type MemberPayload = record {
+  username : text;
+  address : text;
+  phone_number : text;
+};
+type Message = variant {
+  Error : text;
+  InvalidPayload : text;
+  NotFound : text;
+  Success : text;
+};
+type Reservation = record {
+  id : nat64;
+  reservation_date : nat64;
+  book_id : nat64;
+  member_id : nat64;
+};
+type ReservationPayload = record { book_id : nat64; member_id : nat64 };
+type Result = variant { Ok : Book; Err : Message };
+type Result_1 = variant { Ok : Loan; Err : Message };
+type Result_2 = variant { Ok : Member; Err : Message };
+type Result_3 = variant { Ok : Reservation; Err : Message };
+type Result_4 = variant { Ok : vec Book; Err : Message };
+type Result_5 = variant { Ok : vec Loan; Err : Message };
+type Result_6 = variant { Ok : vec Member; Err : Message };
+type Result_7 = variant { Ok : vec Reservation; Err : Message };
+service : {
+  create_book : (BookPayload) -> (Result);
+  create_loan : (LoanPayload) -> (Result_1);
+  create_member : (MemberPayload) -> (Result_2);
+  create_reservation : (ReservationPayload) -> (Result_3);
+  get_book_by_id : (nat64) -> (Result) query;
+  get_books : () -> (Result_4) query;
+  get_loan_by_id : (nat64) -> (Result_1) query;
+  get_loans : () -> (Result_5) query;
+  get_member_by_id : (nat64) -> (Result_2) query;
+  get_members : () -> (Result_6) query;
+  get_reservation_by_id : (nat64) -> (Result_3) query;
+  get_reservations : () -> (Result_7) query;
+}
