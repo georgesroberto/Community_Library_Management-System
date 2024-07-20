@@ -242,6 +242,45 @@ fn get_book_by_id(id: u64) -> Result<Book, Message> {
 }
 
 #[ic_cdk::update]
+fn update_book(id: u64, payload: BookPayload) -> Result<Book, Message> {
+    if payload.title.is_empty() || payload.author.is_empty() || payload.isbn.is_empty() {
+        return Err(Message::InvalidPayload(
+            "Ensure 'title', 'author', and 'isbn' are provided.".to_string(),
+        ));
+    }
+
+    BOOK_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        match storage.iter().find(|(_, book)| book.id == id).map(|(_, book)| book.clone()) {
+            Some(mut book) => {
+                book.title = payload.title;
+                book.author = payload.author;
+                book.genre = payload.genre;
+                book.publication_year = payload.publication_year;
+                book.isbn = payload.isbn;
+                book.location = payload.location;
+                book.available = payload.available;
+                storage.insert(id, book.clone());
+                Ok(book)
+            }
+            None => Err(Message::NotFound("Book not found".to_string())),
+        }
+    })
+}
+
+#[ic_cdk::update]
+fn delete_book(id: u64) -> Result<Message, Message> {
+    BOOK_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if storage.remove(&id).is_some() {
+            Ok(Message::Success("Book deleted successfully".to_string()))
+        } else {
+            Err(Message::NotFound("Book not found".to_string()))
+        }
+    })
+}
+
+#[ic_cdk::update]
 fn create_member(payload: MemberPayload) -> Result<Member, Message> {
     if payload.username.is_empty() || payload.phone_number.is_empty() || payload.address.is_empty() {
         return Err(Message::InvalidPayload(
@@ -293,6 +332,41 @@ fn get_member_by_id(id: u64) -> Result<Member, Message> {
             .find(|(_, member)| member.id == id)
             .map(|(_, member)| member.clone())
             .ok_or(Message::NotFound("Member not found".to_string()))
+    })
+}
+
+#[ic_cdk::update]
+fn update_member(id: u64, payload: MemberPayload) -> Result<Member, Message> {
+    if payload.username.is_empty() || payload.phone_number.is_empty() || payload.address.is_empty() {
+        return Err(Message::InvalidPayload(
+            "Ensure 'username', 'phone_number', and 'address' are provided.".to_string(),
+        ));
+    }
+
+    MEMBER_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        match storage.iter().find(|(_, member)| member.id == id).map(|(_, member)| member.clone()) {
+            Some(mut member) => {
+                member.username = payload.username;
+                member.phone_number = payload.phone_number;
+                member.address = payload.address;
+                storage.insert(id, member.clone());
+                Ok(member)
+            }
+            None => Err(Message::NotFound("Member not found".to_string())),
+        }
+    })
+}
+
+#[ic_cdk::update]
+fn delete_member(id: u64) -> Result<Message, Message> {
+    MEMBER_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if storage.remove(&id).is_some() {
+            Ok(Message::Success("Member deleted successfully".to_string()))
+        } else {
+            Err(Message::NotFound("Member not found".to_string()))
+        }
     })
 }
 
@@ -376,6 +450,43 @@ fn get_book_loan_by_id(id: u64) -> Result<Loan, Message> {
 }
 
 #[ic_cdk::update]
+fn update_loan(id: u64, payload: LoanPayload) -> Result<Loan, Message> {
+    if payload.due_date == 0 {
+        return Err(Message::InvalidPayload(
+            "Ensure 'due_date' is provided.".to_string(),
+        ));
+    }
+
+    LOAN_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        match storage.iter().find(|(_, loan)| loan.id == id).map(|(_, loan)| loan.clone()) {
+            Some(mut loan) => {
+                loan.book_id = payload.book_id;
+                loan.member_id = payload.member_id;
+                loan.due_date = payload.due_date;
+                loan.return_date = payload.return_date;
+                loan.fine = payload.fine;
+                storage.insert(id, loan.clone());
+                Ok(loan)
+            }
+            None => Err(Message::NotFound("Loan not found".to_string())),
+        }
+    })
+}
+
+#[ic_cdk::update]
+fn delete_loan(id: u64) -> Result<Message, Message> {
+    LOAN_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if storage.remove(&id).is_some() {
+            Ok(Message::Success("Loan deleted successfully".to_string()))
+        } else {
+            Err(Message::NotFound("Loan not found".to_string()))
+        }
+    })
+}
+
+#[ic_cdk::update]
 fn create_reservation(payload: ReservationPayload) -> Result<Reservation, Message> {
     if payload.book_id == 0 || payload.member_id == 0 {
         return Err(Message::InvalidPayload(
@@ -448,6 +559,40 @@ fn get_reservation_by_id(id: u64) -> Result<Reservation, Message> {
             .find(|(_, reservation)| reservation.id == id)
             .map(|(_, reservation)| reservation.clone())
             .ok_or(Message::NotFound("Reservation not found".to_string()))
+    })
+}
+
+#[ic_cdk::update]
+fn update_reservation(id: u64, payload: ReservationPayload) -> Result<Reservation, Message> {
+    if payload.book_id == 0 || payload.member_id == 0 {
+        return Err(Message::InvalidPayload(
+            "Ensure 'book_id' and 'member_id' are provided.".to_string(),
+        ));
+    }
+
+    RESERVATION_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        match storage.iter().find(|(_, reservation)| reservation.id == id).map(|(_, reservation)| reservation.clone()) {
+            Some(mut reservation) => {
+                reservation.book_id = payload.book_id;
+                reservation.member_id = payload.member_id;
+                storage.insert(id, reservation.clone());
+                Ok(reservation)
+            }
+            None => Err(Message::NotFound("Reservation not found".to_string())),
+        }
+    })
+}
+
+#[ic_cdk::update]
+fn delete_reservation(id: u64) -> Result<Message, Message> {
+    RESERVATION_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if storage.remove(&id).is_some() {
+            Ok(Message::Success("Reservation deleted successfully".to_string()))
+        } else {
+            Err(Message::NotFound("Reservation not found".to_string()))
+        }
     })
 }
 
